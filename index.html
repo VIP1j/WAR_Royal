@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WAR ROYALE: FAIR PLAY</title>
+    <title>WAR ROYALE: SKELETON UPDATE</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -104,10 +104,15 @@ const ALL_UNITS = [
     {id:22, n:'Дракончик', cost:5, hp:3500, dmg:250, c1:'#e67e22', sz:18, sp:0.7, mL:150},
     {id:23, n:'К-Дракон', cost:7, hp:9000, dmg:450, c1:'#7f8c8d', sz:22, sp:0.6, mL:400},
     {id:24, n:'Г-Дракон', cost:9, hp:18000, dmg:900, c1:'#2c3e50', sz:26, sp:0.5, mL:800},
-    {id:25, n:'Ел-Дракон', cost:10, hp:30000, dmg:1500, c1:'#f1c40f', sz:32, sp:0.4, mL:1300}
+    {id:25, n:'Ел-Дракон', cost:10, hp:30000, dmg:1500, c1:'#f1c40f', sz:32, sp:0.4, mL:1300},
+    // НОВІ СКЕЛЕТИ
+    {id:26, n:'Скелети X3', cost:3, hp:1500, dmg:150, c1:'#ecf0f1', sz:7, sp:1.2, mL:1500, split: 3},
+    {id:27, n:'Скелет-Боєць', cost:7, hp:40000, dmg:3000, c1:'#bdc3c7', sz:15, sp:0.5, mL:2900},
+    {id:28, n:'Скелет-Гігант', cost:10, hp:150000, dmg:10000, c1:'#ffffff', sz:35, sp:0.3, mL:3900}
 ];
 
-firebase.initializeApp({ databaseURL: "https://war-royl-default-rtdb.firebaseio.com" });
+// ПРАВИЛЬНИЙ ФАЙРБЕЙС (war-6ef12)
+firebase.initializeApp({ databaseURL: "https://war-6ef12-default-rtdb.firebaseio.com" });
 const db = firebase.database();
 let player = { nick: '', pass: '', path: 0, deck: [0, 1], evo: [] };
 let gameActive = false, elixir = 5, botElixir = 5, units = [], castles = {}, timeLeft = 180;
@@ -128,12 +133,16 @@ async function handleAuth() {
 }
 
 async function login(n, p) {
-    const snap = await db.ref('users/' + n).once('value');
-    if(snap.exists() && snap.val().pass !== p) return alert("ПАРОЛЬ НЕВІРНИЙ");
-    player = snap.exists() ? snap.val() : { nick: n, pass: p, path: 0, deck: [0, 1], evo: [] };
-    if(!snap.exists()) db.ref('users/' + n).set(player);
-    localStorage.setItem('war_royale_fortress', JSON.stringify({n, p}));
-    updateUI(); showScreen('menu-screen');
+    try {
+        const snap = await db.ref('users/' + n).once('value');
+        if(snap.exists() && snap.val().pass !== p) return alert("ПАРОЛЬ НЕВІРНИЙ");
+        player = snap.exists() ? snap.val() : { nick: n, pass: p, path: 0, deck: [0, 1], evo: [] };
+        if(!snap.exists()) db.ref('users/' + n).set(player);
+        localStorage.setItem('war_royale_fortress', JSON.stringify({n, p}));
+        updateUI(); showScreen('menu-screen');
+    } catch(e) {
+        alert("Помилка Firebase! Перевір Rules в консолі (read/write: true)");
+    }
 }
 
 function startBattle() {
@@ -141,38 +150,32 @@ function startBattle() {
     gameActive = true; units = []; elixir = 5; botElixir = 5; timeLeft = 180;
     castles = { 
         p: { hp: 5000 + (player.path * 100), x: 120, y: 450, w: 100, h: 40 }, 
-        e: { hp: 5000 + (player.path * 50), x: 120, y: 10, w: 100, h: 40 } 
+        e: { hp: 5000 + (player.path * 60), x: 120, y: 10, w: 100, h: 40 } 
     };
     renderBattleDeck();
     
-    // ПРАВИЛЬНИЙ ТАЙМЕР ТА ЕЛІКСИР (БЕЗ БЕЗКІНЕЧНОСТІ)
     const gameInt = setInterval(() => {
         if(!gameActive) { clearInterval(gameInt); return; }
-        
-        // Поповнення еліксиру (рівномірно)
         elixir = Math.min(10, elixir + 0.5);
         botElixir = Math.min(10, botElixir + 0.5);
-        
         timeLeft--;
         document.getElementById('timer').innerText = `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}`;
         
-        // Логіка бота (тепер чесна)
-        const opt = ALL_UNITS.filter(u => u.mL <= player.path + 2 && u.cost <= botElixir);
+        const opt = ALL_UNITS.filter(u => u.mL <= player.path + 5 && u.cost <= botElixir);
         if(opt.length > 0 && Math.random() < 0.3) {
             let u = opt[Math.floor(Math.random()*opt.length)];
-            // СУВОРА ПЕРЕВІРКА ЕЛІКСИРУ
-            if(botElixir >= u.cost) {
-                botElixir -= u.cost; 
-                spawn(u, 'e');
-            }
+            if(botElixir >= u.cost) { botElixir -= u.cost; spawn(u, 'e'); }
         }
-    }, 1500); // Сповільнили цикл для стабільності
+    }, 1500);
     loop();
 }
 
 function spawn(u, team) {
     const m = player.evo?.includes(u.id) ? 3 : 1;
-    units.push({ ...u, team, hp: u.hp*m, curHp: u.hp*m, dmg: u.dmg*m, x: 155+Math.random()*30, y: team==='p'?440:60 });
+    const count = u.split || 1;
+    for(let i=0; i<count; i++) {
+        units.push({ ...u, team, hp: u.hp*m, curHp: u.hp*m, dmg: u.dmg*m, x: 140+Math.random()*60, y: team==='p'?440:60 });
+    }
 }
 
 function loop() {
@@ -180,7 +183,6 @@ function loop() {
     ctx.fillStyle = "#27ae60"; ctx.fillRect(0,0,340,500);
     ctx.fillStyle = "#2980b9"; ctx.fillRect(0, 240, 340, 20); 
     ctx.fillStyle = "#7f8c8d"; ctx.fillRect(130, 230, 80, 40);
-
     ctx.fillStyle = "#c0392b"; ctx.fillRect(castles.e.x, castles.e.y, castles.e.w, castles.e.h); 
     ctx.fillStyle = "#2980b9"; ctx.fillRect(castles.p.x, castles.p.y, castles.p.w, castles.p.h); 
 
@@ -196,12 +198,9 @@ function loop() {
         } else {
             let atEnemyGate = (u.team === 'p' && u.y <= castles.e.y + castles.e.h + 5);
             let atPlayerGate = (u.team === 'e' && u.y >= castles.p.y - 5);
-
-            if(atEnemyGate) {
-                castles.e.hp -= u.dmg/60;
-            } else if(atPlayerGate) {
-                castles.p.hp -= u.dmg/60;
-            } else {
+            if(atEnemyGate) castles.e.hp -= u.dmg/60;
+            else if(atPlayerGate) castles.p.hp -= u.dmg/60;
+            else {
                 if(u.x < 165) u.x += 0.3; else if(u.x > 175) u.x -= 0.3;
                 u.y += u.team === 'p' ? -u.sp : u.sp;
             }
@@ -218,7 +217,6 @@ function loop() {
     document.getElementById('hp-player-text').innerText = "КРІПОСТЬ: " + Math.floor(castles.p.hp);
     document.getElementById('hp-enemy-text').innerText = "ВОРОГ: " + Math.floor(castles.e.hp);
     document.getElementById('bot-elixir').innerText = Math.floor(botElixir);
-
     if(castles.p.hp <= 0 || castles.e.hp <= 0) endGame(castles.e.hp <= 0);
     else requestAnimationFrame(loop);
 }
@@ -231,12 +229,17 @@ function endGame(win) {
 }
 
 function applyPromo() {
-    if(document.getElementById('promo-input').value === "BORIS") {
-        if(!player.evo) player.evo = [];
+    const val = document.getElementById('promo-input').value;
+    if(!player.evo) player.evo = [];
+    
+    if(val === "BORIS") {
         if(!player.evo.includes(17)) player.evo.push(17);
-        db.ref('users/'+player.nick).update({evo: player.evo});
         alert("BORIS АКТИВОВАНО!");
+    } else if(val === "bombokladick") {
+        if(!player.evo.includes(12)) player.evo.push(12);
+        alert("ПРОМО АКТИВОВАНО! БОМБА СТАЛА СИЛЬНІШОЮ!");
     }
+    db.ref('users/'+player.nick).update({evo: player.evo});
 }
 
 async function showLeaderboards(type) {
