@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WAR ROYALE: SKELETON UPDATE</title>
+    <title>WAR ROYALE: FINAL VERSION</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -11,8 +11,7 @@
         body { margin: 0; background: var(--bg); color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; touch-action: manipulation; }
         .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; position: absolute; background: #1a1a1a; }
         .active { display: flex; }
-        .auth-container { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        input { padding: 15px; border-radius: 12px; border: none; width: 280px; font-size: 16px; background: #222; color: white; border: 1px solid #444; }
+        input { padding: 15px; border-radius: 12px; border: none; width: 280px; font-size: 16px; background: #222; color: white; border: 1px solid #444; margin-bottom: 10px; }
         #top-info { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 10px 15px; z-index: 100; box-sizing: border-box; }
         #timer { position: absolute; left: 50%; transform: translateX(-50%); background: gold; color: black; padding: 5px 15px; border-radius: 0 0 15px 15px; font-weight: bold; border: 2px solid black; }
         #game-ui { position: absolute; bottom: 5px; width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
@@ -30,27 +29,41 @@
 
     <div id="auth-screen" class="screen active">
         <h1 style="color: gold;">WAR ROYALE</h1>
-        <div class="auth-container">
-            <input type="text" id="nickname" placeholder="НІКНЕЙМ">
-            <input type="password" id="password" placeholder="ПАРОЛЬ">
-            <button onclick="handleAuth()">УВІЙТИ В КРІПОСТЬ</button>
-        </div>
+        <input type="text" id="nickname" placeholder="НІКНЕЙМ">
+        <input type="password" id="password" placeholder="ПАРОЛЬ">
+        <button onclick="handleAuth()">УВІЙТИ В КРІПОСТЬ</button>
     </div>
 
     <div id="menu-screen" class="screen">
-        <div style="font-size: 32px; color: gold;">LVL: <span id="m-path">0</span></div>
-        <div style="font-size: 20px; color: #f1c40f; margin-bottom: 10px;">МОНЕТИ: <span id="m-coins">0</span> 💰</div>
-        <button onclick="startBattle()" style="background: #c0392b;">В БІЙ ⚔️</button>
+        <div style="font-size: 28px; color: gold;">LVL: <span id="m-path">0</span> | 💰 <span id="m-coins">0</span></div>
+        <button onclick="showScreen('mode-screen')" style="background: #c0392b; font-size: 22px;">В БІЙ ⚔️</button>
         <button onclick="openCards()">КОЛОДА 🃏</button>
-        <button onclick="showLeaderboards('all')">РЕЙТИНГ 🥇</button>
+        <button onclick="showLeaderboards()">РЕЙТИНГ 🥇</button>
         <button onclick="showScreen('promo-screen')">ПРОМО ⚙️</button>
+    </div>
+
+    <div id="mode-screen" class="screen">
+        <h2 style="color: gold;">ОБЕРИ РЕЖИМ</h2>
+        <button onclick="startBattle('campaign')" style="background: #27ae60;">ЛІНІЯ ПРОХОДЖЕННЯ</button>
+        <button onclick="startBattle('multiplayer')" style="background: #8e44ad;">МУЛЬТИПЛЕЄР (PvP)</button>
+        <button onclick="showScreen('room-screen')" style="background: #2980b9;">ГРА З ДРУГОМ (КОД)</button>
+        <button onclick="showScreen('menu-screen')" style="background: #444;">НАЗАД</button>
+    </div>
+
+    <div id="room-screen" class="screen">
+        <h2 style="color: gold;">КІМНАТА</h2>
+        <input type="text" id="room-input" placeholder="КОД КІМНАТИ">
+        <button onclick="joinRoom()">ПРИЄДНАТИСЯ</button>
+        <div style="margin: 5px; color: #aaa;">АБО</div>
+        <button onclick="createRoom()" style="background: #27ae60;">СТВОРИТИ КІМНАТУ</button>
+        <div id="my-room-code" style="color: gold; font-size: 24px; margin: 15px; font-weight: bold;"></div>
+        <button onclick="showScreen('mode-screen')" style="background: #444;">НАЗАД</button>
     </div>
 
     <div id="game-screen" class="screen">
         <div id="top-info">
-            <div style="color: #ff4d4d;">ВОРОГ 💧: <span id="bot-elixir">5</span></div>
+            <div style="color: #ff4d4d;"><span id="enemy-name">ВОРОГ</span> 💧: <span id="bot-elixir">5</span></div>
             <div id="timer">03:00</div>
-            <div></div>
         </div>
         <div class="hp-label" style="top: 85px; color: #ff4d4d;" id="hp-enemy-text">5000</div>
         <canvas id="gameCanvas"></canvas>
@@ -62,11 +75,7 @@
     </div>
 
     <div id="list-screen" class="screen">
-        <h2 id="list-title" style="color: gold;">РЕЙТИНГ</h2>
-        <div id="leader-tabs" style="display: flex; gap: 5px; margin-bottom: 10px;">
-            <button onclick="showLeaderboards('all')" style="width:130px; font-size:12px;">УСІ</button>
-            <button onclick="showLeaderboards('cyborg')" style="width:130px; font-size:12px; background: #8e44ad;">КІБОРГИ</button>
-        </div>
+        <h2 id="list-title" style="color: gold;">РЕЙТИНГ ГРАВЦІВ</h2>
         <div id="generic-list" class="list-container"></div>
         <button onclick="showScreen('menu-screen')" style="margin-top:10px;">НАЗАД</button>
     </div>
@@ -113,9 +122,9 @@ const ALL_UNITS = [
 
 firebase.initializeApp({ databaseURL: "https://war-6ef12-default-rtdb.firebaseio.com" });
 const db = firebase.database();
-// Додано coins: 0
 let player = { nick: '', pass: '', path: 0, coins: 0, deck: [0, 1], evo: [] };
 let gameActive = false, elixir = 5, botElixir = 5, units = [], castles = {}, timeLeft = 180;
+let enemyDeck = [0, 1], currentRoomRef = null;
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -126,7 +135,7 @@ window.onload = () => {
     if(saved) { const d = JSON.parse(saved); login(d.n, d.p); }
 };
 
-async function handleAuth() {
+function handleAuth() {
     const n = document.getElementById('nickname').value.trim();
     const p = document.getElementById('password').value.trim();
     if(n && p) login(n, p);
@@ -136,47 +145,72 @@ async function login(n, p) {
     try {
         const snap = await db.ref('users/' + n).once('value');
         if(snap.exists() && snap.val().pass !== p) return alert("ПАРОЛЬ НЕВІРНИЙ");
-        // Об'єднання з початковим об'єктом, щоб не втратити нове поле coins
         player = snap.exists() ? {...player, ...snap.val()} : { nick: n, pass: p, path: 0, coins: 0, deck: [0, 1], evo: [] };
         if(!snap.exists()) db.ref('users/' + n).set(player);
         localStorage.setItem('war_royale_fortress', JSON.stringify({n, p}));
         updateUI(); showScreen('menu-screen');
-    } catch(e) {
-        alert("Помилка Firebase!");
-    }
+    } catch(e) { alert("Firebase Error!"); }
 }
 
-function startBattle() {
+function createRoom() {
+    const code = Math.floor(1000 + Math.random() * 9000);
+    currentRoomRef = db.ref('rooms/' + code);
+    currentRoomRef.set({ host: player.nick, hostDeck: player.deck, hostHP: 5000 + (player.path * 100), status: 'waiting' });
+    document.getElementById('my-room-code').innerText = "ТВІЙ КОД: " + code;
+    
+    currentRoomRef.on('value', (snap) => {
+        const data = snap.val();
+        if (data && data.status === 'start') {
+            currentRoomRef.off();
+            startBattle('room', { name: data.guest, deck: data.guestDeck, hp: data.guestHP });
+        }
+    });
+}
+
+async function joinRoom() {
+    const code = document.getElementById('room-input').value;
+    const roomRef = db.ref('rooms/' + code);
+    const snap = await roomRef.once('value');
+    if (snap.exists() && snap.val().status === 'waiting') {
+        const d = snap.val();
+        await roomRef.update({ guest: player.nick, guestDeck: player.deck, guestHP: 5000 + (player.path * 100), status: 'start' });
+        startBattle('room', { name: d.host, deck: d.hostDeck, hp: d.hostHP });
+    } else alert("Кімнату не знайдено!");
+}
+
+async function startBattle(mode, roomData = null) {
+    let enemyHP = 5000, enemyName = "БОТ"; enemyDeck = [0, 1];
+    if(mode === 'campaign') {
+        enemyHP = 5000 + (player.path * 150);
+        enemyDeck = ALL_UNITS.filter(u => u.mL <= player.path + 2).map(u => u.id);
+    } else if(mode === 'multiplayer') {
+        const snap = await db.ref('users').limitToFirst(20).once('value');
+        const users = []; snap.forEach(s => { if(s.key !== player.nick) users.push(s.val()); });
+        if(users.length > 0) { let op = users[Math.floor(Math.random()*users.length)]; enemyName = op.nick; enemyHP = 5000 + (op.path * 100); enemyDeck = op.deck; }
+    } else if(mode === 'room') { enemyName = roomData.name; enemyHP = roomData.hp; enemyDeck = roomData.deck; }
+
+    document.getElementById('enemy-name').innerText = enemyName;
     showScreen('game-screen');
     gameActive = true; units = []; elixir = 5; botElixir = 5; timeLeft = 180;
-    castles = { 
-        p: { hp: 5000 + (player.path * 100), x: 120, y: 450, w: 100, h: 40 }, 
-        e: { hp: 5000 + (player.path * 60), x: 120, y: 10, w: 100, h: 40 } 
-    };
+    castles = { p: { hp: 5000 + (player.path * 100), x: 120, y: 450, w: 100, h: 40 }, e: { hp: enemyHP, x: 120, y: 10, w: 100, h: 40 } };
     renderBattleDeck();
     
     const gameInt = setInterval(() => {
         if(!gameActive) { clearInterval(gameInt); return; }
-        elixir = Math.min(10, elixir + 0.5);
-        botElixir = Math.min(10, botElixir + 0.5);
-        timeLeft--;
+        elixir = Math.min(10, elixir + 0.4); botElixir = Math.min(10, botElixir + 0.4); timeLeft--;
         document.getElementById('timer').innerText = `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}`;
-        
-        const opt = ALL_UNITS.filter(u => u.mL <= player.path + 5 && u.cost <= botElixir);
-        if(opt.length > 0 && Math.random() < 0.3) {
-            let u = opt[Math.floor(Math.random()*opt.length)];
+        if(botElixir >= 3 && Math.random() < 0.3) {
+            let u = ALL_UNITS.find(x => x.id === enemyDeck[Math.floor(Math.random()*enemyDeck.length)]);
             if(botElixir >= u.cost) { botElixir -= u.cost; spawn(u, 'e'); }
         }
-    }, 1500);
+    }, 1000);
     loop();
 }
 
 function spawn(u, team) {
     const m = player.evo?.includes(u.id) ? 3 : 1;
     const count = u.split || 1;
-    for(let i=0; i<count; i++) {
-        units.push({ ...u, team, hp: u.hp*m, curHp: u.hp*m, dmg: u.dmg*m, x: 140+Math.random()*60, y: team==='p'?440:60 });
-    }
+    for(let i=0; i<count; i++) units.push({ ...u, team, hp: u.hp*m, curHp: u.hp*m, dmg: u.dmg*m, x: 140+Math.random()*60, y: team==='p'?440:60 });
 }
 
 function loop() {
@@ -190,83 +224,47 @@ function loop() {
     units.forEach(u => {
         let enemy = units.find(e => e.team !== u.team && Math.hypot(e.x-u.x, e.y-u.y) < (u.sz + e.sz + 5));
         let threat = units.find(e => e.team !== u.team && Math.hypot(e.x-u.x, e.y-u.y) < 100);
-
-        if(enemy) {
-            enemy.curHp -= u.dmg/60;
-        } else if (threat) {
-            let dx = threat.x-u.x, dy = threat.y-u.y, dist = Math.sqrt(dx*dx+dy*dy);
-            u.x += (dx/dist)*u.sp; u.y += (dy/dist)*u.sp;
-        } else {
-            let atEnemyGate = (u.team === 'p' && u.y <= castles.e.y + castles.e.h + 5);
-            let atPlayerGate = (u.team === 'e' && u.y >= castles.p.y - 5);
-            if(atEnemyGate) castles.e.hp -= u.dmg/60;
-            else if(atPlayerGate) castles.p.hp -= u.dmg/60;
-            else {
-                if(u.x < 165) u.x += 0.3; else if(u.x > 175) u.x -= 0.3;
-                u.y += u.team === 'p' ? -u.sp : u.sp;
-            }
+        if(enemy) enemy.curHp -= u.dmg/60;
+        else if (threat) { let dx = threat.x-u.x, dy = threat.y-u.y, dist = Math.sqrt(dx*dx+dy*dy); u.x += (dx/dist)*u.sp; u.y += (dy/dist)*u.sp; }
+        else {
+            if(u.team === 'p' && u.y <= castles.e.y + castles.e.h + 5) castles.e.hp -= u.dmg/60;
+            else if(u.team === 'e' && u.y >= castles.p.y - 5) castles.p.hp -= u.dmg/60;
+            else { u.y += u.team === 'p' ? -u.sp : u.sp; if(u.x < 165) u.x += 0.2; else if(u.x > 175) u.x -= 0.2; }
         }
         ctx.fillStyle = u.team === 'p' ? u.c1 : '#333';
         ctx.beginPath(); ctx.arc(u.x, u.y, u.sz, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = "black"; ctx.fillRect(u.x-10, u.y-u.sz-8, 20, 4);
-        ctx.fillStyle = u.team === 'p' ? "lime" : "red";
-        ctx.fillRect(u.x-10, u.y-u.sz-8, (u.curHp/u.hp)*20, 4);
+        ctx.fillStyle = u.team === 'p' ? "lime" : "red"; ctx.fillRect(u.x-10, u.y-u.sz-8, (u.curHp/u.hp)*20, 4);
     });
 
     units = units.filter(u => u.curHp > 0);
     document.getElementById('elixir-val').innerText = Math.floor(elixir);
-    document.getElementById('hp-player-text').innerText = "КРІПОСТЬ: " + Math.floor(castles.p.hp);
-    document.getElementById('hp-enemy-text').innerText = "ВОРОГ: " + Math.floor(castles.e.hp);
+    document.getElementById('hp-player-text').innerText = "HP: " + Math.floor(castles.p.hp);
+    document.getElementById('hp-enemy-text').innerText = "HP: " + Math.floor(castles.e.hp);
     document.getElementById('bot-elixir').innerText = Math.floor(botElixir);
+    
     if(castles.p.hp <= 0 || castles.e.hp <= 0) endGame(castles.e.hp <= 0);
     else requestAnimationFrame(loop);
 }
 
 function endGame(win) {
-    gameActive = false; 
-    if(win) {
-        alert("ПЕРЕМОГА! +1 МОНЕТА");
-        player.path++;
-        player.coins = (player.coins || 0) + 1; // Додаємо монету
-    } else {
-        alert("ПОРАЗКА!");
-    }
-    db.ref('users/' + player.nick).set(player);
-    updateUI(); showScreen('menu-screen');
+    gameActive = false; if(win) { alert("ПЕРЕМОГА! +1 МОНЕТА"); player.path++; player.coins++; } else alert("ПОРАЗКА!");
+    db.ref('users/' + player.nick).set(player); updateUI(); showScreen('menu-screen');
 }
 
-function applyPromo() {
-    const val = document.getElementById('promo-input').value;
-    if(!player.evo) player.evo = [];
-    if(val === "BORIS") {
-        if(!player.evo.includes(17)) player.evo.push(17);
-        alert("BORIS АКТИВОВАНО!");
-    } else if(val === "bombokladick") {
-        if(!player.evo.includes(12)) player.evo.push(12);
-        alert("ПРОМО АКТИВОВАНО!");
-    }
-    db.ref('users/'+player.nick).update({evo: player.evo});
-}
+function updateUI() { document.getElementById('m-path').innerText = player.path; document.getElementById('m-coins').innerText = player.coins || 0; }
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
-async function showLeaderboards(type) {
+async function showLeaderboards() {
     showScreen('list-screen');
-    document.getElementById('leader-tabs').style.display = 'flex';
-    document.getElementById('list-title').innerText = type === 'cyborg' ? "КІБОРГИ" : "РЕЙТИНГ";
     const snap = await db.ref('users').once('value');
-    let u = [];
-    snap.forEach(s => {
-        let d = s.val();
-        if(type === 'all') u.push(d);
-        else if(type === 'cyborg' && d.evo?.includes(17)) u.push(d);
-    });
+    let u = []; snap.forEach(s => u.push(s.val()));
     u.sort((a,b) => b.path - a.path);
-    document.getElementById('generic-list').innerHTML = u.slice(0,15).map((x,i) => `<div class="item-box">#${i+1} ${x.nick} <b>LVL: ${x.path}</b></div>`).join('');
+    document.getElementById('generic-list').innerHTML = u.slice(0,10).map((x,i) => `<div class="item-box">#${i+1} ${x.nick} <b>LVL: ${x.path}</b></div>`).join('');
 }
 
 function openCards() {
     showScreen('list-screen');
-    document.getElementById('leader-tabs').style.display = 'none';
-    document.getElementById('list-title').innerText = "ТВОЯ КОЛОДА";
     document.getElementById('generic-list').innerHTML = ALL_UNITS.map(u => {
         let lock = player.path < u.mL;
         return `<div class="item-box ${lock ? 'locked-card' : ''}" style="border:1px solid ${player.deck.includes(u.id)?'lime':'#444'}" onclick="toggleCard(${u.id}, ${lock})">
@@ -275,22 +273,8 @@ function openCards() {
     }).join('') + `<button onclick="saveDeck()" style="background:green">ЗБЕРЕГТИ</button>`;
 }
 
-function toggleCard(id, lock) {
-    if(lock) return;
-    if(player.deck.includes(id)) player.deck = player.deck.filter(i => i !== id);
-    else if(player.deck.length < 5) player.deck.push(id);
-    openCards();
-}
-
+function toggleCard(id, lock) { if(!lock) { if(player.deck.includes(id)) player.deck = player.deck.filter(i => i !== id); else if(player.deck.length < 5) player.deck.push(id); openCards(); } }
 function saveDeck() { db.ref('users/'+player.nick).update({deck:player.deck}); showScreen('menu-screen'); }
-
-// Оновлено відображення монет
-function updateUI() { 
-    document.getElementById('m-path').innerText = player.path; 
-    document.getElementById('m-coins').innerText = player.coins || 0;
-}
-
-function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
 function renderBattleDeck() {
     const d = document.getElementById('battle-deck'); d.innerHTML = '';
@@ -301,6 +285,12 @@ function renderBattleDeck() {
         b.onclick = () => { if(elixir >= u.cost) { elixir -= u.cost; spawn(u, 'p'); } };
         d.appendChild(b);
     });
+}
+
+function applyPromo() {
+    const val = document.getElementById('promo-input').value;
+    if(val === "BORIS") { if(!player.evo.includes(17)) player.evo.push(17); alert("КІБОРГ!"); }
+    db.ref('users/'+player.nick).update({evo: player.evo});
 }
 </script>
 </body>
