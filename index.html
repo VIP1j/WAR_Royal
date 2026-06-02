@@ -32,6 +32,9 @@
         .alert-text { font-size: 15px; line-height: 1.4; margin-bottom: 20px; color: #ecf0f1; }
         .alert-btn { background: #27ae60; box-shadow: 0 4px 0 #1e7e43; width: 180px; margin: 0 auto; }
         @keyframes popUp { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* СТИЛІ ДЛЯ ПОЛЯ КІЛЬКОСТІ В МАГАЗИНІ */
+        .shop-input { width: 100px; padding: 8px; margin: 5px 0; font-size: 14px; border-radius: 8px; border: 1px solid gold; background: #111; color: white; font-family: inherit; text-align: center; }
     </style>
 </head>
 <body>
@@ -66,13 +69,20 @@
 
     <div id="shop-screen" class="screen">
         <h2 style="color: gold; text-shadow: 2px 2px #000;">МАГАЗИН ПАКІВ</h2>
-        <div style="font-size: 20px; margin-bottom: 20px;">Твої монети: 💰 <span id="shop-coins">0</span></div>
+        <div style="font-size: 20px; margin-bottom: 15px;">Твої монети: 💰 <span id="shop-coins">0</span></div>
         <div style="background: #2c3e50; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid gold; width: 260px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
-            <h3 style="color: gold; margin-top: 0;">ВІЙСЬКОВИЙ ПАК</h3>
-            <p style="font-size: 14px; color: #ccc; line-height: 1.5;">Шанси:<br>🔮 Ультра Бомба: <span style="color: #9b59b6; font-weight: bold;">0.1%</span><br>✨ Очки покращення: 99.9%</p>
-            <button onclick="buyPack()" style="width: 100%; margin: 10px 0 0 0; background: #27ae60; box-shadow: 0 4px 0 #1e7e43;">КУПИТИ ЗА 33 💰</button>
+            <h3 style="color: gold; margin-top: 0; margin-bottom: 5px;">ВІЙСЬКОВИЙ ПАК</h3>
+            <p style="font-size: 13px; color: #ccc; line-height: 1.4; margin: 5px 0;">Шанси:<br>🔮 Ультра Бомба: <span style="color: #9b59b6; font-weight: bold;">0.1%</span><br>✨ Очки покращення: 99.9%</p>
+            
+            <button onclick="buyPack()" style="width: 100%; margin: 8px 0 5px 0; padding: 10px; background: #27ae60; box-shadow: 0 4px 0 #1e7e43;">КУПИТИ 1 ЗА 33 💰</button>
+            
+            <div style="margin-top: 10px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 10px;">
+                <label style="font-size: 12px; color: gold; display: block;">КІЛЬКІСТЬ ДЛЯ АВТО-ВІДКРИТТЯ:</label>
+                <input type="number" id="auto-pack-count" class="shop-input" value="5" min="1">
+                <button onclick="buyPackAuto()" style="width: 100%; margin: 5px 0 0 0; padding: 10px; background: #8e44ad; box-shadow: 0 4px 0 #683082;">АВТО-ВІДКРИТТЯ ⚡</button>
+            </div>
         </div>
-        <button onclick="showScreen('menu-screen')" style="background: #444; box-shadow: 0 4px 0 #222; margin-top: 20px;">НАЗАД</button>
+        <button onclick="showScreen('menu-screen')" style="background: #444; box-shadow: 0 4px 0 #222; margin-top: 15px;">НАЗАД</button>
     </div>
 
     <div id="mode-screen" class="screen">
@@ -333,13 +343,11 @@ async function buyPack() {
     let roll = Math.random() * 100;
     
     if (roll <= 0.1) {
-        // Шанс 0.1% — УЛЬТРА БОМБА
         if (!player.unlockedExclusives.includes(29)) {
             player.unlockedExclusives.push(29);
         }
         gameAlert("🎉 СУПЕРУСПІХ!", "Тобі випала легендарна 🔮 УЛЬТРА БОМБА! Шукай її в колоді.", "#9b59b6");
     } else {
-        // Шанс 99.9% — Очки покращення
         let points = Math.floor(10 + Math.random() * 41);
         player.upgradePoints += points;
         gameAlert("📦 ВІД КРИТО ПАК", `Отримано: ✨ Очки покращення x${points}.`, "#27ae60");
@@ -347,6 +355,59 @@ async function buyPack() {
     
     await db.ref('users/' + player.nick).set(player);
     updateUI();
+}
+
+/* ФУНКЦІЯ АВТО-ВІДКРИТТЯ КЕЙСІВ */
+async function buyPackAuto() {
+    const inputCount = parseInt(document.getElementById('auto-pack-count').value);
+    
+    if (isNaN(inputCount) || inputCount <= 0) {
+        return gameAlert("УВАГА", "Введіть коректну кількість паків для відкриття!", "#c0392b");
+    }
+    
+    const totalCost = inputCount * 33;
+    if (player.coins < totalCost) {
+        return gameAlert("МАГАЗИН", `НЕДОСТАТНЬО МОНЕТ!\nДля відкриття ${inputCount} паків потрібно ${totalCost} 💰.\nУ тебе є лише ${player.coins} 💰.`, "#c0392b");
+    }
+    
+    // Списуємо монети
+    player.coins -= totalCost;
+    
+    let totalPointsGained = 0;
+    let ultraBombDropped = false;
+    let countUltraBombs = 0;
+    
+    // Прокручуємо ролли в циклі
+    for (let i = 0; i < inputCount; i++) {
+        let roll = Math.random() * 100;
+        if (roll <= 0.1) {
+            ultraBombDropped = true;
+            countUltraBombs++;
+            if (!player.unlockedExclusives.includes(29)) {
+                player.unlockedExclusives.push(29);
+            }
+        } else {
+            let points = Math.floor(10 + Math.random() * 41);
+            totalPointsGained += points;
+        }
+    }
+    
+    // Зберігаємо результат в Firebase
+    player.upgradePoints += totalPointsGained;
+    await db.ref('users/' + player.nick).set(player);
+    updateUI();
+    
+    // Формуємо фінальний звіт для відображення
+    let resultMessage = `Успішно відкрито паків: ${inputCount} шт.\n\n`;
+    resultMessage += `✨ Отримано очок покращення: +${totalPointsGained}\n`;
+    
+    if (ultraBombDropped) {
+        resultMessage += `🔮 ВИБИТО УЛЬТРА БОМБ: ${countUltraBombs} шт.!!!`;
+        gameAlert("⚡ МЕГА-РЕЗУЛЬТАТ АВТООТКРИТТЯ", resultMessage, "#9b59b6");
+    } else {
+        resultMessage += `🔮 Ультра Бомба: не випала (шанс 0.1%)`;
+        gameAlert("📦 РЕЗУЛЬТАТ АВТООТКРИТТЯ", resultMessage, "#27ae60");
+    }
 }
 
 async function showLeaderboards() {
