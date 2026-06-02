@@ -24,24 +24,23 @@
         .list-container { background: rgba(0,0,0,0.9); border: 2px solid gold; border-radius: 15px; width: 90%; max-height: 50vh; overflow-y: auto; padding: 10px; }
         .item-box { background: #222; border-bottom: 1px solid #444; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
         .locked-card { opacity: 0.5; filter: grayscale(1); }
-
-        /* КАСТОМНЕ ПУЛЬСУЮЧЕ ІГРОВЕ ПОВІДОМЛЕННЯ */
         #custom-alert { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
         .alert-box { background: #2c3e50; border: 3px solid gold; border-radius: 20px; width: 300px; padding: 25px; text-align: center; box-shadow: 0 0 20px rgba(212,175,55,0.3); animation: popUp 0.3s ease-out; }
         .alert-title { color: gold; font-size: 20px; margin-bottom: 15px; text-shadow: 2px 2px #000; }
         .alert-text { font-size: 15px; line-height: 1.4; margin-bottom: 20px; color: #ecf0f1; text-align: center; white-space: pre-line; }
         .alert-btn { background: #27ae60; box-shadow: 0 4px 0 #1e7e43; width: 180px; margin: 0 auto; }
         @keyframes popUp { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        /* КОНТЕЙНЕР ДЛЯ ПАКІВ */
         .shop-container { display: flex; flex-direction: column; gap: 15px; max-height: 60vh; overflow-y: auto; width: 90%; padding-right: 5px; }
         .pack-card { background: #2c3e50; padding: 15px; border-radius: 15px; text-align: center; border: 2px solid gold; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .shop-input { width: 80px; padding: 6px; margin: 5px 0; font-size: 14px; border-radius: 8px; border: 1px solid gold; background: #111; color: white; font-family: inherit; text-align: center; }
+        
+        /* Стилі для меню покращень */
+        .upgrade-card { background: #2c3e50; padding: 15px; border-radius: 15px; border: 2px solid #e67e22; text-align: center; margin-bottom: 12px; }
+        .upgrade-status { font-size: 13px; color: #2ecc71; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <!-- Внутрішньоігрове повідомлення -->
     <div id="custom-alert">
         <div class="alert-box">
             <div class="alert-title" id="alert-title">СПОВІЩЕННЯ</div>
@@ -58,6 +57,7 @@
     </div>
 
     <div id="menu-screen" class="screen">
+        <div id="m-username" style="font-size: 24px; color: #2ecc71; text-shadow: 2px 2px #000; margin-bottom: 5px; letter-spacing: 1px;">ГРАВЕЦЬ: -</div>
         <div style="font-size: 22px; color: gold; text-align: center; margin-bottom: 10px; text-shadow: 2px 2px #000;">
             LVL: <span id="m-path">0</span> | 💰 <span id="m-coins">0</span><br>
             ✨ Очки: <span id="m-upgrades">0</span>
@@ -65,16 +65,43 @@
         <button onclick="showScreen('mode-screen')" style="background: #c0392b; box-shadow: 0 4px 0 #8e1c10; font-size: 22px;">В БІЙ ⚔️</button>
         <button onclick="openCards()">КОЛОДА 🃏</button>
         <button onclick="showScreen('shop-screen')" style="background: #9b59b6; box-shadow: 0 4px 0 #6c3483;">МАГАЗИН 🛒</button>
+        <button onclick="showScreen('upgrade-screen')" style="background: #d35400; box-shadow: 0 4px 0 #a04000;">ПОКРАЩЕННЯ ⚡</button>
         <button onclick="showLeaderboards()">РЕЙТИНГ 🥇</button>
         <button onclick="showScreen('promo-screen')">ПРОМО ⚙️</button>
+    </div>
+
+    <div id="upgrade-screen" class="screen">
+        <h2 style="color: gold; text-shadow: 2px 2px #000; margin-bottom: 10px;">ПРОКАЧКА ЗАМКУ</h2>
+        <div class="shop-container">
+            <div class="upgrade-card">
+                <h3 style="margin:0; color: #f39c12;">🛡️ ДОДАТКОВЕ HP</h3>
+                <p style="font-size: 12px; color: #ccc; margin: 5px 0;">Дає +500 HP для вашого замку в усіх іграх.</p>
+                <p style="font-size: 13px; margin: 5px 0; color: gold;">Ціна: 100 💰 & 1,000 ✨</p>
+                <button onclick="buyCastleUpgrade('hp')" style="width:100%; padding:10px; font-size:14px; background:#27ae60; box-shadow:0 4px 0 #1e7e43; margin:0;">ПРОКАЧАТИ</button>
+                <div id="upg-hp-status" class="upgrade-status">Куплено: 0</div>
+            </div>
+            <div class="upgrade-card">
+                <h3 style="margin:0; color: #3498db;">💧 МІСТКІСТЬ ЕЛІКСИРУ</h3>
+                <p style="font-size: 12px; color: #ccc; margin: 5px 0;">Збільшує ліміт накопичення еліксиру з 10 до 15.</p>
+                <p style="font-size: 13px; margin: 5px 0; color: gold;">Ціна: 1,000 💰 & 10,000 ✨</p>
+                <button onclick="buyCastleUpgrade('capacity')" style="width:100%; padding:10px; font-size:14px; background:#27ae60; box-shadow:0 4px 0 #1e7e43; margin:0;">ПРОКАЧАТИ</button>
+                <div id="upg-capacity-status" class="upgrade-status">Куплено: 0</div>
+            </div>
+            <div class="upgrade-card">
+                <h3 style="margin:0; color: #2ecc71;">⚡ ШВИДКІСТЬ ЕЛІКСИРУ</h3>
+                <p style="font-size: 12px; color: #ccc; margin: 5px 0;">Прискорює генерацію еліксиру на 25%.</p>
+                <p style="font-size: 13px; margin: 5px 0; color: gold;">Ціна: 10,000 💰 & 100,000 ✨</p>
+                <button onclick="buyCastleUpgrade('speed')" style="width:100%; padding:10px; font-size:14px; background:#27ae60; box-shadow:0 4px 0 #1e7e43; margin:0;">ПРОКАЧАТИ</button>
+                <div id="upg-speed-status" class="upgrade-status">Куплено: 0</div>
+            </div>
+        </div>
+        <button onclick="showScreen('menu-screen')" style="background: #444; box-shadow: 0 4px 0 #222; margin-top: 10px;">НАЗАД</button>
     </div>
 
     <div id="shop-screen" class="screen">
         <h2 style="color: gold; text-shadow: 2px 2px #000; margin-top: 5px; margin-bottom: 5px;">МАГАЗИН ПАКІВ</h2>
         <div style="font-size: 18px; margin-bottom: 10px;">Твої монети: 💰 <span id="shop-coins">0</span></div>
-        
         <div class="shop-container">
-            <!-- ВІЙСЬКОВИЙ ПАК -->
             <div class="pack-card">
                 <h3 style="color: gold; margin: 0 0 5px 0; font-size: 16px;">ВІЙСЬКОВИЙ ПАК</h3>
                 <p style="font-size: 12px; color: #ccc; margin: 0 0 5px 0; line-height: 1.3;">Шанси:<br>🔮 Ультра Бомба: <span style="color: #9b59b6; font-weight: bold;">0.1%</span><br>✨ Очки покращення: 99.9%</p>
@@ -84,8 +111,6 @@
                     <button onclick="buyPackAuto('military')" style="width: 100%; margin: 3px 0 0 0; padding: 8px; font-size: 13px; background: #8e44ad; box-shadow: 0 4px 0 #683082;">АВТО-ВІДКРИТТЯ ⚡</button>
                 </div>
             </div>
-
-            <!-- ЗОМБІ ПАК -->
             <div class="pack-card" style="border-color: #2ecc71;">
                 <h3 style="color: #2ecc71; margin: 0 0 5px 0; font-size: 16px;">ЗОМБІ ПАК 🧟</h3>
                 <p style="font-size: 12px; color: #ccc; margin: 0 0 5px 0; line-height: 1.3;">Шанси:<br>🧟 ЛЕГЕНДАРНИЙ ЗОМБІ: <span style="color: #2ecc71; font-weight: bold;">0.01%</span><br>✨ Очки покращення: 99.99%</p>
@@ -96,7 +121,6 @@
                 </div>
             </div>
         </div>
-        
         <button onclick="showScreen('menu-screen')" style="background: #444; box-shadow: 0 4px 0 #222; margin-top: 10px;">НАЗАД</button>
     </div>
 
@@ -120,7 +144,7 @@
 
     <div id="game-screen" class="screen">
         <div id="top-info">
-            <div style="color: #ff4d4d; font-weight: bold; text-shadow: 1px 1px #000;"><span id="enemy-name">ВОРОГ</span> 💧: <span id="bot-elixir">5</span></div>
+            <div style="color: #ff4d4d; font-weight: bold; text-shadow: 1px 1px #000;"><span id="enemy-name">ВОРОГ</span></div>
             <div id="timer">03:00</div>
         </div>
         <div class="hp-label" style="top: 85px; color: #ff4d4d;" id="hp-enemy-text">5000</div>
@@ -176,16 +200,21 @@ const ALL_UNITS = [
     {id:26, n:'Скелети X3', cost:3, hp:1500, dmg:150, c1:'#ecf0f1', sz:7, sp:1.2, mL:1500, split: 3},
     {id:27, n:'Скелет-Боєць', cost:7, hp:40000, dmg:3000, c1:'#bdc3c7', sz:15, sp:0.5, mL:2900},
     {id:28, n:'Скелет-Гігант', cost:10, hp:150000, dmg:10000, c1:'#ffffff', sz:35, sp:0.3, mL:3900},
-    // ЕКСКЛЮЗИВИ
     {id:29, n:'УЛЬТРА БОМБА', cost:6, hp:500, dmg:999, c1:'#9b59b6', sz:11, sp:1.3, mL:9999},
     {id:30, n:'ЗОМБІ', cost:5, hp:3333, dmg:333, c1:'#2ecc71', sz:11, sp:0.8, mL:9999, isZombie: true}
 ];
 
 firebase.initializeApp({ databaseURL: "https://war-6ef12-default-rtdb.firebaseio.com" });
 const db = firebase.database();
-let player = { nick: '', pass: '', path: 0, coins: 0, deck: [0, 1], evo: [], upgradePoints: 0, unlockedExclusives: [] };
+
+// Додано структуру для збереження рівнів прокачки замку (castleUpg)
+let player = { 
+    nick: '', pass: '', path: 0, coins: 0, deck: [0, 1], evo: [], upgradePoints: 0, unlockedExclusives: [],
+    castleUpg: { hp: 0, capacity: 0, speed: 0 } 
+};
+
 let gameActive = false, elixir = 5, botElixir = 5, units = [], castles = {}, timeLeft = 180;
-let enemyDeck = [0, 1], currentRoomRef = null;
+let enemyDeck = [0, 1], currentRoomRef = null, myRole = 'host', battleMode = 'campaign';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -200,9 +229,7 @@ function gameAlert(title, text, buttonColor = "#27ae60") {
     document.getElementById('custom-alert').style.display = 'flex';
 }
 
-function closeAlert() {
-    document.getElementById('custom-alert').style.display = 'none';
-}
+function closeAlert() { document.getElementById('custom-alert').style.display = 'none'; }
 
 window.onload = () => {
     const saved = localStorage.getItem('war_royale_fortress');
@@ -219,11 +246,16 @@ async function login(n, p) {
     try {
         const snap = await db.ref('users/' + n).once('value');
         if(snap.exists() && snap.val().pass !== p) return gameAlert("ПОМИЛКА", "ПАРОЛЬ НЕВІРНИЙ!", "#c0392b");
-        player = snap.exists() ? {...player, ...snap.val()} : { nick: n, pass: p, path: 0, coins: 0, deck: [0, 1], evo: [], upgradePoints: 0, unlockedExclusives: [] };
+        
+        player = snap.exists() ? {...player, ...snap.val()} : { nick: n, pass: p, path: 0, coins: 0, deck: [0, 1], evo: [], upgradePoints: 0, unlockedExclusives: [], castleUpg: { hp: 0, capacity: 0, speed: 0 } };
         
         if(!player.upgradePoints) player.upgradePoints = 0;
         if(!player.unlockedExclusives) player.unlockedExclusives = [];
-        
+        if(!player.castleUpg) player.castleUpg = { hp: 0, capacity: 0, speed: 0 };
+        if(!player.castleUpg.hp) player.castleUpg.hp = 0;
+        if(!player.castleUpg.capacity) player.castleUpg.capacity = 0;
+        if(!player.castleUpg.speed) player.castleUpg.speed = 0;
+
         if(!snap.exists()) db.ref('users/' + n).set(player);
         localStorage.setItem('war_royale_fortress', JSON.stringify({n, p}));
         updateUI(); showScreen('menu-screen');
@@ -231,33 +263,44 @@ async function login(n, p) {
 }
 
 function createRoom() {
+    myRole = 'host';
     const code = Math.floor(1000 + Math.random() * 9000);
     currentRoomRef = db.ref('rooms/' + code);
-    currentRoomRef.set({ host: player.nick, hostDeck: player.deck, hostHP: 5000 + (player.path * 100), status: 'waiting' });
+    
+    // Враховуємо куплене HP при створенні PvP кімнати
+    let myBaseHP = 5000 + (player.path * 100) + (player.castleUpg.hp * 500);
+    currentRoomRef.set({ host: player.nick, hostDeck: player.deck, hostHP: myBaseHP, status: 'waiting' });
     document.getElementById('my-room-code').innerText = "КОД КІМНАТИ: " + code;
     
     currentRoomRef.on('value', (snap) => {
         const data = snap.val();
         if (data && data.status === 'start') {
             currentRoomRef.off();
+            currentRoomRef = db.ref('rooms/' + code);
             startBattle('room', { name: data.guest, deck: data.guestDeck, hp: data.guestHP });
         }
     });
 }
 
 async function joinRoom() {
+    myRole = 'guest';
     const code = document.getElementById('room-input').value;
     const roomRef = db.ref('rooms/' + code);
     const snap = await roomRef.once('value');
     if (snap.exists() && snap.val().status === 'waiting') {
         const d = snap.val();
-        await roomRef.update({ guest: player.nick, guestDeck: player.deck, guestHP: 5000 + (player.path * 100), status: 'start' });
+        currentRoomRef = roomRef;
+        // Враховуємо куплене HP для гостя кімнати
+        let myBaseHP = 5000 + (player.path * 100) + (player.castleUpg.hp * 500);
+        await roomRef.update({ guest: player.nick, guestDeck: player.deck, guestHP: myBaseHP, status: 'start' });
         startBattle('room', { name: d.host, deck: d.hostDeck, hp: d.hostHP });
     } else gameAlert("УВАГА", "Кімнату не знайдено або вона вже зайнята!", "#c0392b");
 }
 
 async function startBattle(mode, roomData = null) {
+    battleMode = mode;
     let enemyHP = 5000, enemyName = "БОТ"; enemyDeck = [0, 1];
+    
     if(mode === 'campaign') {
         enemyHP = 5000 + (player.path * 150);
         enemyDeck = ALL_UNITS.filter(u => u.mL <= player.path + 2).map(u => u.id);
@@ -266,30 +309,84 @@ async function startBattle(mode, roomData = null) {
         const snap = await db.ref('users').limitToFirst(20).once('value');
         const users = []; snap.forEach(s => { if(s.key !== player.nick) users.push(s.val()); });
         if(users.length > 0) { let op = users[Math.floor(Math.random()*users.length)]; enemyName = op.nick; enemyHP = 5000 + (op.path * 100); enemyDeck = op.deck; }
-    } else if(mode === 'room') { enemyName = roomData.name; enemyHP = roomData.hp; enemyDeck = roomData.deck; }
+    } else if(mode === 'room') { 
+        enemyName = roomData.name; 
+        enemyHP = roomData.hp; 
+        enemyDeck = roomData.deck; 
+    }
 
     document.getElementById('enemy-name').innerText = enemyName;
     showScreen('game-screen');
     gameActive = true; units = []; elixir = 5; botElixir = 5; timeLeft = 180;
-    castles = { p: { hp: 5000 + (player.path * 100), x: 120, y: 450, w: 100, h: 40 }, e: { hp: enemyHP, x: 120, y: 10, w: 100, h: 40 } };
+    
+    // Розраховуємо фінальне HP нашого замку з урахуванням купленої прокачки (+500 за кожен рівень)
+    let myFinalHP = 5000 + (player.path * 100) + (player.castleUpg.hp * 500);
+    castles = { p: { hp: myFinalHP, x: 120, y: 450, w: 100, h: 40 }, e: { hp: enemyHP, x: 120, y: 10, w: 100, h: 40 } };
     renderBattleDeck();
     
+    if(battleMode === 'room' && currentRoomRef) {
+        currentRoomRef.child('spawns').set(null);
+        currentRoomRef.child('spawns').on('child_added', (snap) => {
+            let data = snap.val();
+            if(data.sender !== player.nick) {
+                let remoteUnit = ALL_UNITS.find(x => x.id === data.unitId);
+                spawnLocally(remoteUnit, 'e', data.evoActive);
+            }
+        });
+    }
+
     const gameInt = setInterval(() => {
         if(!gameActive) { clearInterval(gameInt); return; }
-        elixir = Math.min(10, elixir + 0.4); botElixir = Math.min(10, botElixir + 0.4); timeLeft--;
+        
+        // Розраховуємо швидкість пасивного регену еліксиру (базова 0.4 + 25% за кожен рівень прокачки швидкості)
+        let speedMultiplier = 1 + (player.castleUpg.speed * 0.25);
+        let elixirGain = 0.4 * speedMultiplier;
+        
+        // Розраховуємо максимальну місткість еліксиру (базова 10 + 5 за кожен рівень прокачки місткості)
+        let maxElixirCapacity = 10 + (player.castleUpg.capacity * 5);
+        
+        elixir = Math.min(maxElixirCapacity, elixir + elixirGain); 
+        botElixir = Math.min(10, botElixir + 0.4); 
+        timeLeft--;
         document.getElementById('timer').innerText = `${Math.floor(timeLeft/60)}:${(timeLeft%60).toString().padStart(2,'0')}`;
-        if(botElixir >= 3 && Math.random() < 0.3) {
-            let u = ALL_UNITS.find(x => x.id === enemyDeck[Math.floor(Math.random()*enemyDeck.length)]);
-            if(botElixir >= u.cost) { botElixir -= u.cost; spawn(u, 'e'); }
+        
+        if(battleMode === 'campaign' || battleMode === 'multiplayer') {
+            if(botElixir >= 3 && Math.random() < 0.3) {
+                let u = ALL_UNITS.find(x => x.id === enemyDeck[Math.floor(Math.random()*enemyDeck.length)]);
+                if(botElixir >= u.cost) { botElixir -= u.cost; spawnLocally(u, 'e', false); }
+            }
         }
     }, 1000);
     loop();
 }
 
-function spawn(u, team) {
-    const m = player.evo?.includes(u.id) ? 3 : 1;
+function sendSpawnToFirebase(unitId) {
+    if(battleMode === 'room' && currentRoomRef) {
+        let isEvo = player.evo?.includes(unitId) ? true : false;
+        currentRoomRef.child('spawns').push({
+            sender: player.nick,
+            unitId: unitId,
+            evoActive: isEvo,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+    }
+}
+
+function spawnLocally(u, team, forceEvo) {
+    const isEvo = forceEvo || player.evo?.includes(u.id);
+    const m = isEvo ? 3 : 1;
     const count = u.split || 1;
-    for(let i=0; i<count; i++) units.push({ ...u, team, hp: u.hp*m, curHp: u.hp*m, dmg: u.dmg*m, x: 140+Math.random()*60, y: team==='p'?440:60 });
+    for(let i=0; i<count; i++) {
+        units.push({ 
+            ...u, 
+            team, 
+            hp: u.hp*m, 
+            curHp: u.hp*m, 
+            dmg: u.dmg*m, 
+            x: 140+Math.random()*60, 
+            y: team==='p'?440:60 
+        });
+    }
 }
 
 function loop() {
@@ -306,29 +403,15 @@ function loop() {
         
         if(enemy) {
             enemy.curHp -= u.dmg/60;
-            // ПЕРЕВІРКА НА СМЕРТЬ ТА ЗОМБІ-ІНФЕКЦІЮ
-            if (enemy.curHp <= 0) {
-                if (u.isZombie) {
-                    let nextTeam = u.team; // Юніт переходить в команду того зомбі, який його вбив
-                    let baseUnit = ALL_UNITS.find(x => x.id === enemy.id);
-                    
-                    // ДЕБАФ ДЛЯ КОЖНОГО (і для твого зомбі, і для ворожого)
-                    let speedMod = 0.5;   // Швидкість ріжеться вдвічі
-                    let damageMod = 0.7;  // Урон зменшується на 30%
-                    
-                    setTimeout(() => {
-                        units.push({
-                            ...baseUnit,
-                            team: nextTeam,
-                            hp: baseUnit.hp,
-                            curHp: baseUnit.hp,
-                            dmg: baseUnit.dmg * damageMod,
-                            sp: baseUnit.sp * speedMod,
-                            x: enemy.x,
-                            y: enemy.y
-                        });
-                    }, 50);
-                }
+            if (enemy.curHp <= 0 && u.isZombie) {
+                let nextTeam = u.team;
+                let baseUnit = ALL_UNITS.find(x => x.id === enemy.id);
+                setTimeout(() => {
+                    units.push({
+                        ...baseUnit, team: nextTeam, hp: baseUnit.hp, curHp: baseUnit.hp,
+                        dmg: baseUnit.dmg * 0.7, sp: baseUnit.sp * 0.5, x: enemy.x, y: enemy.y
+                    });
+                }, 50);
             }
         }
         else if (threat) { let dx = threat.x-u.x, dy = threat.y-u.y, dist = Math.sqrt(dx*dx+dy*dy); u.x += (dx/dist)*u.sp; u.y += (dy/dist)*u.sp; }
@@ -340,14 +423,13 @@ function loop() {
         ctx.fillStyle = u.team === 'p' ? u.c1 : '#333';
         ctx.beginPath(); ctx.arc(u.x, u.y, u.sz, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = "black"; ctx.fillRect(u.x-10, u.y-u.sz-8, 20, 4);
-        ctx.fillStyle = u.team === 'p' ? "lime" : "red"; ctx.fillRect(u.x-10, u.y-u.sz-8, (u.curHp/u.hp)*20, 4);
+        ctx.fillStyle = u.team === 'p' ? "lime" : "red"; ctx.fillRect(u.x-10, u.y-u.sz-8, Math.max(0, (u.curHp/u.hp)*20), 4);
     });
 
     units = units.filter(u => u.curHp > 0);
     document.getElementById('elixir-val').innerText = Math.floor(elixir);
     document.getElementById('hp-player-text').innerText = "HP: " + Math.floor(castles.p.hp);
     document.getElementById('hp-enemy-text').innerText = "HP: " + Math.floor(castles.e.hp);
-    document.getElementById('bot-elixir').innerText = Math.floor(botElixir);
     
     if(castles.p.hp <= 0 || castles.e.hp <= 0) endGame(castles.e.hp <= 0);
     else requestAnimationFrame(loop);
@@ -355,6 +437,8 @@ function loop() {
 
 function endGame(win) {
     gameActive = false; 
+    if(battleMode === 'room' && currentRoomRef) { currentRoomRef.child('spawns').off(); currentRoomRef.remove(); }
+    
     if(win) { 
         player.path++; 
         player.coins++; 
@@ -367,11 +451,40 @@ function endGame(win) {
     showScreen('menu-screen');
 }
 
+/* ФУНКЦІЯ КУПІВЛІ ПОКРАЩЕНЬ ЗАМКУ */
+async function buyCastleUpgrade(type) {
+    let coinCost = 0, pointsCost = 0;
+    
+    if (type === 'hp') { coinCost = 100; pointsCost = 1000; }
+    else if (type === 'capacity') { coinCost = 1000; pointsCost = 10000; }
+    else if (type === 'speed') { coinCost = 10000; pointsCost = 100000; }
+
+    if (player.coins < coinCost || player.upgradePoints < pointsCost) {
+        return gameAlert("ПРОКАЧКА", "Недостатньо ресурсів для цього покращення!", "#c0392b");
+    }
+
+    player.coins -= coinCost;
+    player.upgradePoints -= pointsCost;
+    player.castleUpg[type] += 1;
+
+    await db.ref('users/' + player.nick).set(player);
+    updateUI();
+    gameAlert("УСПІХ! ⚡", "Ваш замок став сильнішим!", "#27ae60");
+}
+
 function updateUI() { 
+    document.getElementById('m-username').innerText = "ГРАВЕЦЬ: " + (player.nick || "-");
     document.getElementById('m-path').innerText = player.path; 
     document.getElementById('m-coins').innerText = player.coins || 0; 
     document.getElementById('m-upgrades').innerText = player.upgradePoints || 0;
     document.getElementById('shop-coins').innerText = player.coins || 0;
+    
+    // Оновлення рівнів прокачки у вкладці покращень
+    if (player.castleUpg) {
+        document.getElementById('upg-hp-status').innerText = "Куплено: " + (player.castleUpg.hp || 0);
+        document.getElementById('upg-capacity-status').innerText = "Куплено: " + (player.castleUpg.capacity || 0);
+        document.getElementById('upg-speed-status').innerText = "Куплено: " + (player.castleUpg.speed || 0);
+    }
 }
 
 function showScreen(id) { 
@@ -384,14 +497,12 @@ function showScreen(id) {
 async function buyPack(type) {
     const cost = type === 'military' ? 33 : 77;
     if (player.coins < cost) return gameAlert("МАГАЗИН", `НЕДОСТАТНЬО МОНЕТ! ПОТРІБНО ${cost} 💰`, "#c0392b");
-    
     player.coins -= cost;
     let roll = Math.random() * 100;
-    
     if (type === 'military') {
         if (roll <= 0.1) {
             if (!player.unlockedExclusives.includes(29)) player.unlockedExclusives.push(29);
-            gameAlert("🎉 СУПЕРУСПІХ!", "Тобі випала легендарна 🔮 УЛЬТРА БОМБА!", "#9b59b6");
+            gameAlert("🎉 СУПЕРУСПІХ!", "Тобі випала legenda 🔮 УЛЬТРА БОМБА!", "#9b59b6");
         } else {
             let points = Math.floor(10 + Math.random() * 41);
             player.upgradePoints += points;
@@ -400,14 +511,13 @@ async function buyPack(type) {
     } else if (type === 'zombie') {
         if (roll <= 0.01) { 
             if (!player.unlockedExclusives.includes(30)) player.unlockedExclusives.push(30);
-            gameAlert("🧟 О БОЖЕ, ЗОМБІ!", "Ти вибив Легендарного ЗОМБІ! Готуй армію мертвих!", "#2ecc71");
+            gameAlert("🧟 О БОЖЕ, ЗОМБІ!", "Ти вибив Легендарного ЗОМБІ!", "#2ecc71");
         } else {
             let points = Math.floor(30 + Math.random() * 71); 
             player.upgradePoints += points;
             gameAlert("📦 ВІДКРИТО ЗОМБІ ПАК", `Отримано: ✨ Очки покращення x${points}.`, "#2ecc71");
         }
     }
-    
     await db.ref('users/' + player.nick).set(player);
     updateUI();
 }
@@ -417,51 +527,28 @@ async function buyPackAuto(type) {
     const inputId = type === 'military' ? 'auto-military-count' : 'auto-zombie-count';
     const costPerPack = type === 'military' ? 33 : 77;
     const inputCount = parseInt(document.getElementById(inputId).value);
-    
-    if (isNaN(inputCount) || inputCount <= 0) {
-        return gameAlert("УВАГА", "Введіть коректну кількість паків для відкриття!", "#c0392b");
-    }
-    
+    if (isNaN(inputCount) || inputCount <= 0) return gameAlert("УВАГА", "Введіть коректну кількість паків!", "#c0392b");
     const totalCost = inputCount * costPerPack;
-    if (player.coins < totalCost) {
-        return gameAlert("МАГАЗИН", `НЕДОСТАТНЬО МОНЕТ!\nДля відкриття потрібно ${totalCost} 💰.\nУ тебе: ${player.coins} 💰.`, "#c0392b");
-    }
+    if (player.coins < totalCost) return gameAlert("МАГАЗИН", `НЕДОСТАТНЬО МОНЕТ!`, "#c0392b");
     
     player.coins -= totalCost;
-    let totalPointsGained = 0;
-    let droppedCount = 0;
-    
+    let totalPointsGained = 0; let droppedCount = 0;
     for (let i = 0; i < inputCount; i++) {
         let roll = Math.random() * 100;
         if (type === 'military') {
-            if (roll <= 0.1) {
-                droppedCount++;
-                if (!player.unlockedExclusives.includes(29)) player.unlockedExclusives.push(29);
-            } else {
-                totalPointsGained += Math.floor(10 + Math.random() * 41);
-            }
+            if (roll <= 0.1) { droppedCount++; if (!player.unlockedExclusives.includes(29)) player.unlockedExclusives.push(29); } 
+            else totalPointsGained += Math.floor(10 + Math.random() * 41);
         } else if (type === 'zombie') {
-            if (roll <= 0.01) {
-                droppedCount++;
-                if (!player.unlockedExclusives.includes(30)) player.unlockedExclusives.push(30);
-            } else {
-                totalPointsGained += Math.floor(30 + Math.random() * 71);
-            }
+            if (roll <= 0.01) { droppedCount++; if (!player.unlockedExclusives.includes(30)) player.unlockedExclusives.push(30); } 
+            else totalPointsGained += Math.floor(30 + Math.random() * 71);
         }
     }
-    
     player.upgradePoints += totalPointsGained;
     await db.ref('users/' + player.nick).set(player);
     updateUI();
-    
-    let resultMessage = `Відкрито паків: ${inputCount} шт.\n\n✨ Очок покращення: +${totalPointsGained}\n`;
-    if (type === 'military') {
-        resultMessage += `🔮 Вибито Ультра Бомб: ${droppedCount} шт.`;
-        gameAlert("⚡ АВТО-ЗВІТ (ВІЙСЬКОВИЙ)", resultMessage, droppedCount > 0 ? "#9b59b6" : "#27ae60");
-    } else {
-        resultMessage += `🧟 Вибито Зомбі: ${droppedCount} шт.`;
-        gameAlert("⚡ АВТО-ЗВІТ (ЗОМБІ)", resultMessage, droppedCount > 0 ? "#2ecc71" : "#117a65");
-    }
+    let resultMessage = `Відкрито паків: ${inputCount} шт.\n\n✨ Очок: +${totalPointsGained}\n`;
+    if (type === 'military') { resultMessage += `🔮 Бомб: ${droppedCount} шт.`; gameAlert("⚡ АВТО-ЗВІТ", resultMessage, "#9b59b6"); } 
+    else { resultMessage += `🧟 Зомбі: ${droppedCount} шт.`; gameAlert("⚡ АВТО-ЗВІТ", resultMessage, "#2ecc71"); }
 }
 
 async function showLeaderboards() {
@@ -478,7 +565,6 @@ function openCards() {
         let isExclusiveUnlocked = player.unlockedExclusives?.includes(u.id);
         let lock = (player.path < u.mL) && !isExclusiveUnlocked;
         let icon = u.id === 29 ? ' 🔮' : (u.id === 30 ? ' 🧟' : '');
-        
         return `<div class="item-box ${lock ? 'locked-card' : ''}" style="border:1px solid ${player.deck.includes(u.id)?'lime':'#444'}" onclick="toggleCard(${u.id}, ${lock})">
             <span>${lock ? '🔒 ' : ''}${u.n}${icon}</span> <span>💧${u.cost}</span>
         </div>`;
@@ -494,19 +580,21 @@ function renderBattleDeck() {
         const u = ALL_UNITS.find(x => x.id === id);
         const b = document.createElement('div'); b.className = 'unit-btn';
         b.innerHTML = `${u.n}<br>💧${u.cost}`;
-        b.onclick = () => { if(elixir >= u.cost) { elixir -= u.cost; spawn(u, 'p'); } };
+        b.onclick = () => { 
+            if(elixir >= u.cost) { 
+                elixir -= u.cost; 
+                spawnLocally(u, 'p', false); 
+                sendSpawnToFirebase(u.id);    
+            } 
+        };
         d.appendChild(b);
     });
 }
 
 function applyPromo() {
     const val = document.getElementById('promo-input').value;
-    if(val === "BORIS") { 
-        if(!player.evo.includes(17)) player.evo.push(17); 
-        gameAlert("ПРОМОКОД", "Активовано еволюцію М-Кіборга!", "#8e44ad"); 
-    } else {
-        gameAlert("ПРОМОКОД", "Невірний код!", "#c0392b");
-    }
+    if(val === "BORIS") { if(!player.evo.includes(17)) player.evo.push(17); gameAlert("ПРОМОКОД", "Активовано еволюцію!", "#8e44ad"); } 
+    else { gameAlert("ПРОМОКОД", "Невірний код!", "#c0392b"); }
     db.ref('users/'+player.nick).update({evo: player.evo});
 }
 </script>
