@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>WAR ROYALE: FINAL VERSION</title>
+    <title>WAR ROYALE</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         :root { --p-color: #e67e22; --bg: #0f0f0f; }
-        body { margin: 0; background: var(--bg); color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; touch-action: manipulation; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; touch-action: manipulation; user-select: none; }
         .screen { display: none; width: 100vw; height: 100vh; flex-direction: column; align-items: center; justify-content: center; position: absolute; background: #1a1a1a; }
         .active { display: flex; }
-        input { padding: 15px; border-radius: 12px; border: none; width: 280px; font-size: 16px; background: #222; color: white; border: 1px solid #444; margin-bottom: 10px; }
+        input { padding: 15px; border-radius: 12px; border: none; width: 280px; font-size: 16px; background: #222; color: white; border: 1px solid #444; margin-bottom: 10px; font-family: inherit; text-align: center; }
         #top-info { position: absolute; top: 0; width: 100%; display: flex; justify-content: space-between; padding: 10px 15px; z-index: 100; box-sizing: border-box; }
         #timer { position: absolute; left: 50%; transform: translateX(-50%); background: gold; color: black; padding: 5px 15px; border-radius: 0 0 15px 15px; font-weight: bold; border: 2px solid black; }
         #game-ui { position: absolute; bottom: 5px; width: 100%; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
@@ -19,35 +19,68 @@
         .unit-btn { min-width: 65px; height: 85px; background: #34495e; border: 2px solid gold; border-radius: 8px; color: white; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
         canvas { background: #27ae60; border: 4px solid #000; display: block; margin: 0 auto; width: 340px; height: 500px; }
         .hp-label { position: absolute; width: 100%; text-align: center; font-size: 18px; font-weight: bold; text-shadow: 2px 2px #000; pointer-events: none; }
-        button { padding: 15px; margin: 8px; border-radius: 12px; border: none; width: 280px; font-size: 16px; font-weight: bold; background: var(--p-color); color: white; cursor: pointer; }
+        button { padding: 15px; margin: 8px; border-radius: 12px; border: none; width: 280px; font-size: 16px; font-weight: bold; background: var(--p-color); color: white; cursor: pointer; font-family: inherit; text-shadow: 1px 1px #000; box-shadow: 0 4px 0 #a04e0e; transition: transform 0.1s; }
+        button:active { transform: translateY(3px); box-shadow: 0 1px 0 #a04e0e; }
         .list-container { background: rgba(0,0,0,0.9); border: 2px solid gold; border-radius: 15px; width: 90%; max-height: 50vh; overflow-y: auto; padding: 10px; }
         .item-box { background: #222; border-bottom: 1px solid #444; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
         .locked-card { opacity: 0.5; filter: grayscale(1); }
+
+        /* КАСТОМНЕ ПУЛЬСУЮЧЕ ІГРОВЕ ПОВІДОМЛЕННЯ */
+        #custom-alert { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
+        .alert-box { background: #2c3e50; border: 3px solid gold; border-radius: 20px; width: 300px; padding: 25px; text-align: center; box-shadow: 0 0 20px rgba(212,175,55,0.3); animation: popUp 0.3s ease-out; }
+        .alert-title { color: gold; font-size: 20px; margin-bottom: 15px; text-shadow: 2px 2px #000; }
+        .alert-text { font-size: 15px; line-height: 1.4; margin-bottom: 20px; color: #ecf0f1; }
+        .alert-btn { background: #27ae60; box-shadow: 0 4px 0 #1e7e43; width: 180px; margin: 0 auto; }
+        @keyframes popUp { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
+    <!-- Внутрішньоігрове повідомлення -->
+    <div id="custom-alert">
+        <div class="alert-box">
+            <div class="alert-title" id="alert-title">СПОВІЩЕННЯ</div>
+            <div class="alert-text" id="alert-text">Текст повідомлення...</div>
+            <button class="alert-btn" onclick="closeAlert()">ЗРОЗУМІЛО</button>
+        </div>
+    </div>
+
     <div id="auth-screen" class="screen active">
-        <h1 style="color: gold;">WAR ROYALE</h1>
+        <h1 style="color: gold; text-shadow: 3px 3px #000;">WAR ROYALE</h1>
         <input type="text" id="nickname" placeholder="НІКНЕЙМ">
         <input type="password" id="password" placeholder="ПАРОЛЬ">
         <button onclick="handleAuth()">УВІЙТИ В КРІПОСТЬ</button>
     </div>
 
     <div id="menu-screen" class="screen">
-        <div style="font-size: 28px; color: gold;">LVL: <span id="m-path">0</span> | 💰 <span id="m-coins">0</span></div>
-        <button onclick="showScreen('mode-screen')" style="background: #c0392b; font-size: 22px;">В БІЙ ⚔️</button>
+        <div style="font-size: 22px; color: gold; text-align: center; margin-bottom: 10px; text-shadow: 2px 2px #000;">
+            LVL: <span id="m-path">0</span> | 💰 <span id="m-coins">0</span><br>
+            ✨ Очки: <span id="m-upgrades">0</span>
+        </div>
+        <button onclick="showScreen('mode-screen')" style="background: #c0392b; box-shadow: 0 4px 0 #8e1c10; font-size: 22px;">В БІЙ ⚔️</button>
         <button onclick="openCards()">КОЛОДА 🃏</button>
+        <button onclick="showScreen('shop-screen')" style="background: #9b59b6; box-shadow: 0 4px 0 #6c3483;">МАГАЗИН 🛒</button>
         <button onclick="showLeaderboards()">РЕЙТИНГ 🥇</button>
         <button onclick="showScreen('promo-screen')">ПРОМО ⚙️</button>
     </div>
 
+    <div id="shop-screen" class="screen">
+        <h2 style="color: gold; text-shadow: 2px 2px #000;">МАГАЗИН ПАКІВ</h2>
+        <div style="font-size: 20px; margin-bottom: 20px;">Твої монети: 💰 <span id="shop-coins">0</span></div>
+        <div style="background: #2c3e50; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid gold; width: 260px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);">
+            <h3 style="color: gold; margin-top: 0;">ВІЙСЬКОВИЙ ПАК</h3>
+            <p style="font-size: 14px; color: #ccc; line-height: 1.5;">Шанси:<br>🔮 Ультра Бомба: <span style="color: #9b59b6; font-weight: bold;">0.1%</span><br>✨ Очки покращення: 99.9%</p>
+            <button onclick="buyPack()" style="width: 100%; margin: 10px 0 0 0; background: #27ae60; box-shadow: 0 4px 0 #1e7e43;">КУПИТИ ЗА 33 💰</button>
+        </div>
+        <button onclick="showScreen('menu-screen')" style="background: #444; box-shadow: 0 4px 0 #222; margin-top: 20px;">НАЗАД</button>
+    </div>
+
     <div id="mode-screen" class="screen">
         <h2 style="color: gold;">ОБЕРИ РЕЖИМ</h2>
-        <button onclick="startBattle('campaign')" style="background: #27ae60;">ЛІНІЯ ПРОХОДЖЕННЯ</button>
-        <button onclick="startBattle('multiplayer')" style="background: #8e44ad;">МУЛЬТИПЛЕЄР (PvP)</button>
-        <button onclick="showScreen('room-screen')" style="background: #2980b9;">ГРА З ДРУГОМ (КОД)</button>
-        <button onclick="showScreen('menu-screen')" style="background: #444;">НАЗАД</button>
+        <button onclick="startBattle('campaign')" style="background: #27ae60; box-shadow: 0 4px 0 #1e7e43;">ЛІНІЯ ПРОХОДЖЕННЯ</button>
+        <button onclick="startBattle('multiplayer')" style="background: #8e44ad; box-shadow: 0 4px 0 #683082;">МУЛЬТИПЛЕЄР (PvP)</button>
+        <button onclick="showScreen('room-screen')" style="background: #2980b9; box-shadow: 0 4px 0 #1f5f8a;">ГРА З ДРУГОМ (КОД)</button>
+        <button onclick="showScreen('menu-screen')" style="background: #444; box-shadow: 0 4px 0 #222;">НАЗАД</button>
     </div>
 
     <div id="room-screen" class="screen">
@@ -55,21 +88,21 @@
         <input type="text" id="room-input" placeholder="КОД КІМНАТИ">
         <button onclick="joinRoom()">ПРИЄДНАТИСЯ</button>
         <div style="margin: 5px; color: #aaa;">АБО</div>
-        <button onclick="createRoom()" style="background: #27ae60;">СТВОРИТИ КІМНАТУ</button>
-        <div id="my-room-code" style="color: gold; font-size: 24px; margin: 15px; font-weight: bold;"></div>
-        <button onclick="showScreen('mode-screen')" style="background: #444;">НАЗАД</button>
+        <button onclick="createRoom()" style="background: #27ae60; box-shadow: 0 4px 0 #1e7e43;">СТВОРИТИ КІМНАТУ</button>
+        <div id="my-room-code" style="color: gold; font-size: 24px; margin: 15px; font-weight: bold; text-shadow: 2px 2px #000;"></div>
+        <button onclick="showScreen('mode-screen')" style="background: #444; box-shadow: 0 4px 0 #222;">НАЗАД</button>
     </div>
 
     <div id="game-screen" class="screen">
         <div id="top-info">
-            <div style="color: #ff4d4d;"><span id="enemy-name">ВОРОГ</span> 💧: <span id="bot-elixir">5</span></div>
+            <div style="color: #ff4d4d; font-weight: bold; text-shadow: 1px 1px #000;"><span id="enemy-name">ВОРОГ</span> 💧: <span id="bot-elixir">5</span></div>
             <div id="timer">03:00</div>
         </div>
         <div class="hp-label" style="top: 85px; color: #ff4d4d;" id="hp-enemy-text">5000</div>
         <canvas id="gameCanvas"></canvas>
         <div class="hp-label" style="bottom: 165px; color: #4d94ff;" id="hp-player-text">5000</div>
         <div id="game-ui">
-            <div style="color:white; margin-bottom: 5px;">ТВІЙ ЕЛІКСИР: 💧 <span id="elixir-val">5</span></div>
+            <div style="color:white; margin-bottom: 5px; text-shadow: 1px 1px #000;">ТВІЙ ЕЛІКСИР: 💧 <span id="elixir-val">5</span></div>
             <div id="battle-deck"></div>
         </div>
     </div>
@@ -77,14 +110,14 @@
     <div id="list-screen" class="screen">
         <h2 id="list-title" style="color: gold;">РЕЙТИНГ ГРАВЦІВ</h2>
         <div id="generic-list" class="list-container"></div>
-        <button onclick="showScreen('menu-screen')" style="margin-top:10px;">НАЗАД</button>
+        <button onclick="showScreen('menu-screen')" style="margin-top:10px; background: #444; box-shadow: 0 4px 0 #222;">НАЗАД</button>
     </div>
 
     <div id="promo-screen" class="screen">
         <h2 style="color: gold;">ПРОМОКОД</h2>
         <input type="text" id="promo-input" placeholder="ВВЕДІТЬ КОД">
         <button onclick="applyPromo()">АКТИВУВАТИ</button>
-        <button onclick="showScreen('menu-screen')" style="background:#444">НАЗАД</button>
+        <button onclick="showScreen('menu-screen')" style="background:#444; box-shadow: 0 4px 0 #222;">НАЗАД</button>
     </div>
 
 <script>
@@ -117,18 +150,33 @@ const ALL_UNITS = [
     {id:25, n:'Ел-Дракон', cost:10, hp:30000, dmg:1500, c1:'#f1c40f', sz:32, sp:0.4, mL:1300},
     {id:26, n:'Скелети X3', cost:3, hp:1500, dmg:150, c1:'#ecf0f1', sz:7, sp:1.2, mL:1500, split: 3},
     {id:27, n:'Скелет-Боєць', cost:7, hp:40000, dmg:3000, c1:'#bdc3c7', sz:15, sp:0.5, mL:2900},
-    {id:28, n:'Скелет-Гігант', cost:10, hp:150000, dmg:10000, c1:'#ffffff', sz:35, sp:0.3, mL:3900}
+    {id:28, n:'Скелет-Гігант', cost:10, hp:150000, dmg:10000, c1:'#ffffff', sz:35, sp:0.3, mL:3900},
+    // ЕКСКЛЮЗИВНИЙ ЮНІТ
+    {id:29, n:'УЛЬТРА БОМБА', cost:6, hp:500, dmg:999, c1:'#9b59b6', sz:11, sp:1.3, mL:9999}
 ];
 
 firebase.initializeApp({ databaseURL: "https://war-6ef12-default-rtdb.firebaseio.com" });
 const db = firebase.database();
-let player = { nick: '', pass: '', path: 0, coins: 0, deck: [0, 1], evo: [] };
+let player = { nick: '', pass: '', path: 0, coins: 0, deck: [0, 1], evo: [], upgradePoints: 0, unlockedExclusives: [] };
 let gameActive = false, elixir = 5, botElixir = 5, units = [], castles = {}, timeLeft = 180;
 let enemyDeck = [0, 1], currentRoomRef = null;
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = 340; canvas.height = 500;
+
+function gameAlert(title, text, buttonColor = "#27ae60") {
+    document.getElementById('alert-title').innerText = title;
+    document.getElementById('alert-text').innerText = text;
+    const btn = document.querySelector('.alert-btn');
+    btn.style.background = buttonColor;
+    btn.style.boxShadow = `0 4px 0 ${buttonColor === "#27ae60" ? "#1e7e43" : "#95a5a6"}`;
+    document.getElementById('custom-alert').style.display = 'flex';
+}
+
+function closeAlert() {
+    document.getElementById('custom-alert').style.display = 'none';
+}
 
 window.onload = () => {
     const saved = localStorage.getItem('war_royale_fortress');
@@ -144,19 +192,23 @@ function handleAuth() {
 async function login(n, p) {
     try {
         const snap = await db.ref('users/' + n).once('value');
-        if(snap.exists() && snap.val().pass !== p) return alert("ПАРОЛЬ НЕВІРНИЙ");
-        player = snap.exists() ? {...player, ...snap.val()} : { nick: n, pass: p, path: 0, coins: 0, deck: [0, 1], evo: [] };
+        if(snap.exists() && snap.val().pass !== p) return gameAlert("ПОМИЛКА", "ПАРОЛЬ НЕВІРНИЙ!", "#c0392b");
+        player = snap.exists() ? {...player, ...snap.val()} : { nick: n, pass: p, path: 0, coins: 0, deck: [0, 1], evo: [], upgradePoints: 0, unlockedExclusives: [] };
+        
+        if(!player.upgradePoints) player.upgradePoints = 0;
+        if(!player.unlockedExclusives) player.unlockedExclusives = [];
+        
         if(!snap.exists()) db.ref('users/' + n).set(player);
         localStorage.setItem('war_royale_fortress', JSON.stringify({n, p}));
         updateUI(); showScreen('menu-screen');
-    } catch(e) { alert("Firebase Error!"); }
+    } catch(e) { gameAlert("КРИТИЧНА ПОМИЛКА", "Помилка бази даних Firebase!", "#c0392b"); }
 }
 
 function createRoom() {
     const code = Math.floor(1000 + Math.random() * 9000);
     currentRoomRef = db.ref('rooms/' + code);
     currentRoomRef.set({ host: player.nick, hostDeck: player.deck, hostHP: 5000 + (player.path * 100), status: 'waiting' });
-    document.getElementById('my-room-code').innerText = "ТВІЙ КОД: " + code;
+    document.getElementById('my-room-code').innerText = "КОД КІМНАТИ: " + code;
     
     currentRoomRef.on('value', (snap) => {
         const data = snap.val();
@@ -175,7 +227,7 @@ async function joinRoom() {
         const d = snap.val();
         await roomRef.update({ guest: player.nick, guestDeck: player.deck, guestHP: 5000 + (player.path * 100), status: 'start' });
         startBattle('room', { name: d.host, deck: d.hostDeck, hp: d.hostHP });
-    } else alert("Кімнату не знайдено!");
+    } else gameAlert("УВАГА", "Кімнату не знайдено або вона вже зайнята!", "#c0392b");
 }
 
 async function startBattle(mode, roomData = null) {
@@ -248,12 +300,54 @@ function loop() {
 }
 
 function endGame(win) {
-    gameActive = false; if(win) { alert("ПЕРЕМОГА! +1 МОНЕТА"); player.path++; player.coins++; } else alert("ПОРАЗКА!");
-    db.ref('users/' + player.nick).set(player); updateUI(); showScreen('menu-screen');
+    gameActive = false; 
+    if(win) { 
+        player.path++; 
+        player.coins++; 
+        gameAlert("ПЕРЕМОГА! 🎉", "Тобі нараховано: +1 💰 монета та підвищено рівень!", "#27ae60");
+    } else { 
+        gameAlert("ПОРАЗКА 💀", "Спробуй змінити тактику або склад колоди!", "#c0392b"); 
+    }
+    db.ref('users/' + player.nick).set(player); 
+    updateUI(); 
+    showScreen('menu-screen');
 }
 
-function updateUI() { document.getElementById('m-path').innerText = player.path; document.getElementById('m-coins').innerText = player.coins || 0; }
-function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+function updateUI() { 
+    document.getElementById('m-path').innerText = player.path; 
+    document.getElementById('m-coins').innerText = player.coins || 0; 
+    document.getElementById('m-upgrades').innerText = player.upgradePoints || 0;
+    document.getElementById('shop-coins').innerText = player.coins || 0;
+}
+
+function showScreen(id) { 
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+    document.getElementById(id).classList.add('active'); 
+    updateUI();
+}
+
+async function buyPack() {
+    if (player.coins < 33) return gameAlert("МАГАЗИН", "НЕДОСТАТНЬО МОНЕТ! ПОТРІБНО 33 💰", "#c0392b");
+    
+    player.coins -= 33;
+    let roll = Math.random() * 100;
+    
+    if (roll <= 0.1) {
+        // Шанс 0.1% — УЛЬТРА БОМБА
+        if (!player.unlockedExclusives.includes(29)) {
+            player.unlockedExclusives.push(29);
+        }
+        gameAlert("🎉 СУПЕРУСПІХ!", "Тобі випала легендарна 🔮 УЛЬТРА БОМБА! Шукай її в колоді.", "#9b59b6");
+    } else {
+        // Шанс 99.9% — Очки покращення
+        let points = Math.floor(10 + Math.random() * 41);
+        player.upgradePoints += points;
+        gameAlert("📦 ВІД КРИТО ПАК", `Отримано: ✨ Очки покращення x${points}.`, "#27ae60");
+    }
+    
+    await db.ref('users/' + player.nick).set(player);
+    updateUI();
+}
 
 async function showLeaderboards() {
     showScreen('list-screen');
@@ -266,11 +360,13 @@ async function showLeaderboards() {
 function openCards() {
     showScreen('list-screen');
     document.getElementById('generic-list').innerHTML = ALL_UNITS.map(u => {
-        let lock = player.path < u.mL;
+        let isExclusiveUnlocked = player.unlockedExclusives?.includes(u.id);
+        let lock = (player.path < u.mL) && !isExclusiveUnlocked;
+        
         return `<div class="item-box ${lock ? 'locked-card' : ''}" style="border:1px solid ${player.deck.includes(u.id)?'lime':'#444'}" onclick="toggleCard(${u.id}, ${lock})">
-            <span>${lock ? '🔒 ' : ''}${u.n}</span> <span>💧${u.cost}</span>
+            <span>${lock ? '🔒 ' : ''}${u.n} ${u.id === 29 ? '🔮' : ''}</span> <span>💧${u.cost}</span>
         </div>`;
-    }).join('') + `<button onclick="saveDeck()" style="background:green">ЗБЕРЕГТИ</button>`;
+    }).join('') + `<button onclick="saveDeck()" style="background:green; box-shadow: 0 4px 0 #0e6b0e; margin-top:15px;">ЗБЕРЕГТИ КОЛОДУ</button>`;
 }
 
 function toggleCard(id, lock) { if(!lock) { if(player.deck.includes(id)) player.deck = player.deck.filter(i => i !== id); else if(player.deck.length < 5) player.deck.push(id); openCards(); } }
@@ -289,7 +385,12 @@ function renderBattleDeck() {
 
 function applyPromo() {
     const val = document.getElementById('promo-input').value;
-    if(val === "BORIS") { if(!player.evo.includes(17)) player.evo.push(17); alert("КІБОРГ!"); }
+    if(val === "BORIS") { 
+        if(!player.evo.includes(17)) player.evo.push(17); 
+        gameAlert("ПРОМОКОД", "Активовано еволюцію М-Кіборга!", "#8e44ad"); 
+    } else {
+        gameAlert("ПРОМОКОД", "Невірний код!", "#c0392b");
+    }
     db.ref('users/'+player.nick).update({evo: player.evo});
 }
 </script>
